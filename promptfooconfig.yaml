@@ -1,0 +1,158 @@
+description: Production RAG Evaluation with Built-in RAGAS Metrics and F1 Score
+
+providers:
+  - id: openai:gpt-4
+    config:
+      apiKey: sk-proj-vM0ob8TYljv25QejYlJDT3BlbkFJRld6O7nCrsudt0vS8LTW
+
+prompts:
+  - file://prompt_v1.md
+  - file://prompt_v2.md
+
+defaultTest:
+  assert:
+    # Built-in RAGAS metrics for RAG evaluation
+    - type: answer-relevance
+      threshold: 0.7
+      metric: answer_relevance
+      weight: 0
+
+    - type: context-faithfulness
+      threshold: 0.8
+      metric: context_faithfulness
+      weight: 0
+
+    - type: context-relevance
+      threshold: 0.7
+      metric: context_relevance
+      weight: 0
+
+    # Custom F1 score calculation for categories
+    - type: javascript
+      value: |
+        const predicted = output.toLowerCase().includes('$categories') ? '$categories' : 'other';
+        const actual = '$ground_truth_categories';
+        return predicted === actual ? 1 : 0;
+      metric: category_accuracy
+      weight: 0
+
+    # F1 Score components for category classification
+    - type: javascript
+      value: |
+        const predicted = output.toLowerCase().includes('$categories') ? '$categories' : 'other';
+        const actual = '$ground_truth_categories';
+        // True Positive: predicted positive and actual positive
+        return (predicted === '$categories' && actual === '$categories') ? 1 : 0;
+      metric: true_positive_$categories
+      weight: 0
+
+    - type: javascript
+      value: |
+        const predicted = output.toLowerCase().includes('$categories') ? '$categories' : 'other';
+        const actual = '$ground_truth_categories';
+        // False Positive: predicted positive but actual negative
+        return (predicted === '$categories' && actual !== '$categories') ? 1 : 0;
+      metric: false_positive_$categories
+      weight: 0
+
+    - type: javascript
+      value: |
+        const predicted = output.toLowerCase().includes('$categories') ? '$categories' : 'other';
+        const actual = '$ground_truth_categories';
+        // False Negative: predicted negative but actual positive
+        return (predicted !== '$categories' && actual === '$categories') ? 1 : 0;
+      metric: false_negative_$categories
+      weight: 0
+
+    # Semantic similarity using built-in metric
+    - type: similar
+      value: "$ground_truth_response"
+      threshold: 0.8
+      metric: semantic_similarity
+      weight: 0
+
+# Derived metrics for F1 score calculation
+derivedMetrics:
+  # Technical category F1 score
+  - name: f1_score_technical
+    value: |
+      const tp = true_positive_technical || 0;
+      const fp = false_positive_technical || 0;
+      const fn = false_negative_technical || 0;
+      if (tp === 0) return 0;
+      const precision = tp / (tp + fp);
+      const recall = tp / (tp + fn);
+      return 2 * (precision * recall) / (precision + recall);
+
+  # Business category F1 score
+  - name: f1_score_business
+    value: |
+      const tp = true_positive_business || 0;
+      const fp = false_positive_business || 0;
+      const fn = false_negative_business || 0;
+      if (tp === 0) return 0;
+      const precision = tp / (tp + fp);
+      const recall = tp / (tp + fn);
+      return 2 * (precision * recall) / (precision + recall);
+
+  # Analytical category F1 score
+  - name: f1_score_analytical
+    value: |
+      const tp = true_positive_analytical || 0;
+      const fp = false_positive_analytical || 0;
+      const fn = false_negative_analytical || 0;
+      if (tp === 0) return 0;
+      const precision = tp / (tp + fp);
+      const recall = tp / (tp + fn);
+      return 2 * (precision * recall) / (precision + recall);
+
+  # Overall F1 score (macro-averaged)
+  - name: f1_score_overall
+    value: (f1_score_technical + f1_score_business + f1_score_analytical) / 3
+
+  # Combined RAGAS score
+  - name: ragas_combined_score
+    value: (answer_relevance + context_faithfulness + context_relevance) / 3
+
+tests:
+  - description: Technical Docker containerization question
+    vars:
+      questions: "How does Docker containerization improve application deployment?"
+      context: "Modern software development emphasizes scalability, performance, and maintainability in cloud-native environments."
+      categories: "technical"
+      ground_truth_response: "Modern development practices emphasize modularity, automated testing, and continuous integration for reliable software delivery."
+      ground_truth_categories: "technical"
+
+  - description: Business automation efficiency question
+    vars:
+      questions: "Analyze the impact of automation on operational efficiency"
+      context: "Financial reports suggest that technology investments yield significant returns in operational efficiency."
+      categories: "business"
+      ground_truth_response: "Business success factors include customer focus, innovation, strategic partnerships, and adaptability to market changes."
+      ground_truth_categories: "business"
+
+  - description: Analytical sales performance question
+    vars:
+      questions: "What trends can you identify in quarterly sales performance?"
+      context: "Business intelligence dashboards track KPIs, identify opportunities, and support strategic decision-making."
+      categories: "analytical"
+      ground_truth_response: "Analysis should include data quality assessment, trend identification, and actionable business insights."
+      ground_truth_categories: "analytical"
+
+  - description: Business digital transformation question
+    vars:
+      questions: "Analyze the impact of automation on operational efficiency"
+      context: "Market research indicates increasing customer expectations and competitive pressures driving digital transformation."
+      categories: "business"
+      ground_truth_response: "Digital transformation ROI is measured through operational efficiency gains, customer satisfaction improvements, and revenue growth metrics."
+      ground_truth_categories: "business"
+
+  - description: Analytical pricing strategies question
+    vars:
+      questions: "Assess the impact of pricing strategies on market share"
+      context: "Statistical models provide insights into user behavior, conversion factors, and performance metrics."
+      categories: "analytical"
+      ground_truth_response: "Analysis should include data quality assessment, trend identification, and actionable business insights."
+      ground_truth_categories: "analytical"
+
+outputPath: ./promptfoo_results.json

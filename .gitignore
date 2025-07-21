@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+venv/
+
+# Environment files
+.env
+
+# Generated files
+*.xlsx
+evaluation_results_*
+*_results.json
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Cache
+__pycache__/
+.cache/
+.pytest_cache/ 

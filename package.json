@@ -1,0 +1,26 @@
+{
+  "name": "promptfoo-ragas-evaluation",
+  "version": "1.0.0",
+  "description": "Production-ready evaluation system using promptfoo with built-in RAGAS metrics and F1 scoring",
+  "main": "evaluate.py",
+  "scripts": {
+    "eval": "python evaluate.py",
+    "view": "npx promptfoo view",
+    "serve": "npx promptfoo serve"
+  },
+  "dependencies": {
+    "promptfoo": "^0.117.1"
+  },
+  "keywords": [
+    "promptfoo",
+    "evaluation",
+    "ragas",
+    "llm",
+    "f1-score",
+    "excel"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

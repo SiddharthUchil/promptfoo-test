@@ -1,0 +1,18 @@
+description: Simple test configuration
+
+providers:
+  - id: openai:gpt-4
+    config:
+      apiKey: ${OPENAI_API_KEY}
+
+prompts:
+  - file://prompt_v1.md
+
+tests:
+  - description: Test case 1
+    vars:
+      questions: "How does Docker containerization improve application deployment?"
+      context: "Modern software development emphasizes scalability, performance, and maintainability in cloud-native environments."
+      categories: "technical"
+
+outputPath: ./simple_results.json
